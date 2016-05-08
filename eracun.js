@@ -173,7 +173,14 @@ streznik.post('/izpisiRacunBaza', function(zahteva, odgovor) {
     });
   });
 });
-
+// vrni podrobnosti o trenutni stranki
+var strankaTrenutna=function(strankaId,callback){
+  pb.all("SELECT Customer.* FROM Customer, Invoice \
+            WHERE Customer.CustomerId = " + strankaId,
+    function(napaka, vrstice) {
+      callback(vrstice);
+    })
+}
 // Izpis računa v HTML predstavitvi ali izvorni XML obliki
 streznik.get('/izpisiRacun/:oblika', function(zahteva, odgovor) {
   pesmiIzKosarice(zahteva, function(pesmi) {
@@ -183,14 +190,18 @@ streznik.get('/izpisiRacun/:oblika', function(zahteva, odgovor) {
       odgovor.send("<p>V košarici nimate nobene pesmi, \
         zato računa ni mogoče pripraviti!</p>");
     } else {
+      strankaTrenutna(zahteva.session.stranka,function(stranke){
       odgovor.setHeader('content-type', 'text/xml');
       odgovor.render('eslog', {
-        vizualiziraj: zahteva.params.oblika == 'html' ? true : false,
-        postavkeRacuna: pesmi
+      vizualiziraj: zahteva.params.oblika == 'html' ? true : false,
+      postavkeRacuna: pesmi,
+      postavkeStrank: stranke[0]
       })  
+      })
     }
   })
 })
+
 
 // Privzeto izpiši račun v HTML obliki
 streznik.get('/izpisiRacun', function(zahteva, odgovor) {
